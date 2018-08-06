@@ -7,6 +7,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 
 	"gopkg.in/errgo.v1"
 	"gopkg.in/mgo.v2"
@@ -14,9 +16,18 @@ import (
 
 var ErrDisabled = errgo.New("MongoDB testing is disabled")
 
+var dialTimeout = time.Second
+
 type Database struct {
 	*mgo.Database
+	exclusive bool
 }
+
+var (
+	sessionMu sync.Mutex
+	session   *mgo.Session
+	dialError error
+)
 
 // New connects to a MongoDB instance and returns a database
 // instance that uses it. The database name is randomly chosen; all
@@ -32,6 +43,30 @@ type Database struct {
 // If the environment variable MGOTESTDISABLE is non-empty,
 // ErrDisabled will be returned.
 func New() (*Database, error) {
+	sessionMu.Lock()
+	defer sessionMu.Unlock()
+	if session != nil {
+		return &Database{
+			Database: session.DB(randomDatabaseName()),
+		}, nil
+	}
+	if dialError != nil {
+		return nil, errgo.Notef(dialError, "dial failed previously")
+	}
+	db, err := NewExclusive()
+	if err != nil {
+		dialError = err
+		return nil, errgo.Mask(err)
+	}
+	db.exclusive = false
+	session = db.Database.Session
+	return db, nil
+}
+
+// NewExclusive is like New except that it always returns a session
+// is freshly created, rather than using one that's shared with other
+// tests.
+func NewExclusive() (*Database, error) {
 	if os.Getenv("MGOTESTDISABLE") != "" {
 		return nil, ErrDisabled
 	}
@@ -39,12 +74,13 @@ func New() (*Database, error) {
 	if connStr == "" {
 		connStr = "localhost"
 	}
-	session, err := mgo.Dial(connStr)
+	session, err := mgo.DialWithTimeout(connStr, dialTimeout)
 	if err != nil {
 		return nil, errgo.Notef(err, "cannot dial MongoDB")
 	}
 	return &Database{
-		Database: session.DB(randomDatabaseName()),
+		Database:  session.DB(randomDatabaseName()),
+		exclusive: true,
 	}, nil
 }
 
@@ -56,6 +92,9 @@ func (db *Database) Close() error {
 	err := db.DropDatabase()
 	if err != nil {
 		return errgo.Notef(err, "cannot drop test database")
+	}
+	if db.exclusive {
+		db.Session.Close()
 	}
 	return nil
 }

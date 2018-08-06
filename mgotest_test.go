@@ -5,11 +5,13 @@ package mgotest_test
 
 import (
 	"testing"
+	"time"
 
 	qt "github.com/frankban/quicktest"
-	"github.com/juju/mgotest"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/juju/mgotest"
 )
 
 type testDoc struct {
@@ -18,6 +20,7 @@ type testDoc struct {
 }
 
 func TestNew(t *testing.T) {
+	mgotest.ResetGlobalState()
 	c := qt.New(t)
 	db, err := mgotest.New()
 	c.Assert(err, qt.Equals, nil)
@@ -57,4 +60,42 @@ func TestNew(t *testing.T) {
 	coll3 := db3.C("collection")
 	err = coll3.Find(bson.M{"_id": "foo"}).One(&doc)
 	c.Assert(err, qt.Equals, mgo.ErrNotFound)
+}
+
+func TestNewExclusive(t *testing.T) {
+	mgotest.ResetGlobalState()
+	c := qt.New(t)
+	db, err := mgotest.New()
+	c.Assert(err, qt.Equals, nil)
+
+	// Check that NewExclusive gives us a different session.
+	db1, err := mgotest.NewExclusive()
+	c.Assert(err, qt.Equals, nil)
+	c.Assert(db1.Session, qt.Not(qt.Equals), db.Session)
+
+	// Sanity check that New does give us the same session.
+	db2, err := mgotest.New()
+	c.Assert(err, qt.Equals, nil)
+	c.Assert(db2.Session, qt.Equals, db.Session)
+}
+
+func TestNewErrorCausesImmediateReturnLater(t *testing.T) {
+	mgotest.ResetGlobalState()
+	c := qt.New(t)
+	defer c.Cleanup()
+
+	// Set connection string to an invalid address.
+	c.Setenv("MGOCONNECTIONSTRING", "0.1.2.3")
+	c.Patch(mgotest.DialTimeout, 50*time.Millisecond)
+
+	db, err := mgotest.New()
+	c.Assert(err, qt.ErrorMatches, `cannot dial MongoDB: .*`)
+	c.Assert(db, qt.IsNil)
+
+	// Set connection string to a valid address, but it should
+	// be ignored now because it failed once.
+	c.Setenv("MGOCONNECTIONSTRING", "")
+
+	db, err = mgotest.New()
+	c.Assert(err, qt.ErrorMatches, `dial failed previously: cannot dial MongoDB: .*`)
 }
