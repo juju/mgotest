@@ -73,6 +73,12 @@ func TestNewDisabled(t *testing.T) {
 	c.Assert(err, qt.ErrorMatches, `MongoDB testing is disabled`)
 	c.Assert(errgo.Cause(err), qt.Equals, mgotest.ErrDisabled)
 	c.Assert(db, qt.IsNil)
+
+	// ensure that a second attempt returns the same cause.
+	db, err = mgotest.New()
+	c.Assert(err, qt.ErrorMatches, `MongoDB testing is disabled`)
+	c.Assert(errgo.Cause(err), qt.Equals, mgotest.ErrDisabled)
+	c.Assert(db, qt.IsNil)
 }
 
 func TestNewExclusive(t *testing.T) {
