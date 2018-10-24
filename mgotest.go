@@ -55,7 +55,9 @@ func New() (*Database, error) {
 	}
 	db, err := NewExclusive()
 	if err != nil {
-		dialError = err
+		if errgo.Cause(err) != ErrDisabled {
+			dialError = err
+		}
 		return nil, errgo.Mask(err, errgo.Is(ErrDisabled))
 	}
 	db.exclusive = false
