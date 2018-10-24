@@ -41,7 +41,7 @@ var (
 // If MGOCONNECTIONSTRING is empty, "localhost" will be used.
 //
 // If the environment variable MGOTESTDISABLE is non-empty,
-// ErrDisabled will be returned.
+// an error with a cause of ErrDisabled will be returned.
 func New() (*Database, error) {
 	sessionMu.Lock()
 	defer sessionMu.Unlock()
@@ -56,7 +56,7 @@ func New() (*Database, error) {
 	db, err := NewExclusive()
 	if err != nil {
 		dialError = err
-		return nil, errgo.Mask(err)
+		return nil, errgo.Mask(err, errgo.Is(ErrDisabled))
 	}
 	db.exclusive = false
 	session = db.Database.Session
