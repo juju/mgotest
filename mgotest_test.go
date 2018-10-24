@@ -8,6 +8,7 @@ import (
 	"time"
 
 	qt "github.com/frankban/quicktest"
+	errgo "gopkg.in/errgo.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -22,6 +23,7 @@ type testDoc struct {
 func TestNew(t *testing.T) {
 	mgotest.ResetGlobalState()
 	c := qt.New(t)
+	defer c.Done()
 	db, err := mgotest.New()
 	c.Assert(err, qt.Equals, nil)
 
@@ -62,9 +64,21 @@ func TestNew(t *testing.T) {
 	c.Assert(err, qt.Equals, mgo.ErrNotFound)
 }
 
+func TestNewDisabled(t *testing.T) {
+	mgotest.ResetGlobalState()
+	c := qt.New(t)
+	defer c.Done()
+	c.Setenv("MGOTESTDISABLE", "1")
+	db, err := mgotest.New()
+	c.Assert(err, qt.ErrorMatches, `MongoDB testing is disabled`)
+	c.Assert(errgo.Cause(err), qt.Equals, mgotest.ErrDisabled)
+	c.Assert(db, qt.IsNil)
+}
+
 func TestNewExclusive(t *testing.T) {
 	mgotest.ResetGlobalState()
 	c := qt.New(t)
+	defer c.Done()
 	db, err := mgotest.New()
 	c.Assert(err, qt.Equals, nil)
 
@@ -82,7 +96,7 @@ func TestNewExclusive(t *testing.T) {
 func TestNewErrorCausesImmediateReturnLater(t *testing.T) {
 	mgotest.ResetGlobalState()
 	c := qt.New(t)
-	defer c.Cleanup()
+	defer c.Done()
 
 	// Set connection string to an invalid address.
 	c.Setenv("MGOCONNECTIONSTRING", "0.1.2.3")
