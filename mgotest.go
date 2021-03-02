@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/juju/mgo/v2"
 	"gopkg.in/errgo.v1"
-	"gopkg.in/mgo.v2"
 )
 
 var ErrDisabled = errgo.New("MongoDB testing is disabled")
@@ -36,7 +36,7 @@ var (
 // The environment variable MGOCONNECTIONSTRING will
 // be consulted to determine the connection string to use
 // (see https://docs.mongodb.com/manual/reference/connection-string/
-// or https://godoc.org/gopkg.in/mgo.v2#Dial for details of the format).
+// or https://godoc.org/github.com/juju/mgo/v2#Dial for details of the format).
 //
 // If MGOCONNECTIONSTRING is empty, "localhost" will be used.
 //

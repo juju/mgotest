@@ -1,14 +1,10 @@
 language: go
 go_import_path: "github.com/juju/mgotest"
 go: 
-  - "1.9"
-  - "1.10"
-  - "1.11"
-before_install:
-  - "go get github.com/rogpeppe/godeps"
+  - "1.14"
+  - "1.16"
 install:
   - "go get -d github.com/juju/mgotest"
-  - "godeps -u $GOPATH/src/github.com/juju/mgotest/dependencies.tsv"
-script: GO111MODULE=on go test ./...
+script: go test ./...
 services:
   - mongodb

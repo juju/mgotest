@@ -8,9 +8,9 @@ import (
 	"time"
 
 	qt "github.com/frankban/quicktest"
-	errgo "gopkg.in/errgo.v1"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/juju/mgo/v2"
+	"github.com/juju/mgo/v2/bson"
+	"gopkg.in/errgo.v1"
 
 	"github.com/juju/mgotest"
 )

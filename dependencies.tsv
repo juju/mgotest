@@ -3,4 +3,4 @@ github.com/google/go-cmp	git	8099a9787ce5dc5984ed879a3bda47dc730a8e97	2017-08-03
 github.com/kr/pretty	git	cfb55aafdaf3ec08f0db22699ab822c50091b1c4	2016-08-23T17:07:15Z
 github.com/kr/text	git	7cafcd837844e784b526369c9bce262804aebc60	2016-05-04T23:40:17Z
 gopkg.in/errgo.v1	git	2393dcb274505bf26bf828549fcb4939c68d37c5	2018-08-18T17:52:05Z
-gopkg.in/mgo.v2	git	9856a29383ce1c59f308dd1cf0363a79b5bef6b5	2018-07-05T11:36:04Z
+github.com/juju/mgo/v2	git	70d5d206e2088a0b03207291c5cd01f48d22a95c	2021-03-02T02:37:03Z
